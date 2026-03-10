@@ -1,15 +1,20 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 
 namespace BucketListAPI.Models;
 
+
 public partial class User
 {
-    public int IdUser { get; set; }
+   
+    
+        public int UserId { get; set; }
+        public string UserName { get; set; } = "";
 
-    public string NameUser { get; set; } = null!;
+        public bool IsLoggedIn => UserId > 0;
 
-    public string PassWordUser { get; set; } = null!;
+    
 
     public virtual ICollection<Personalbucketlist> Personalbucketlists { get; set; } = new List<Personalbucketlist>();
 }

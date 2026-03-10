@@ -115,18 +115,18 @@ app.MapGet("/bucketlistitems", async (BucketListDbContext db) =>
 });
 
 // GET: Check username en password
-app.MapGet("/users/login", async (string username, string password, BucketListDbContext db) =>
+app.MapGet("/users/login", async (string username, BucketListDbContext db) =>
 {
     var user = await db.Users
-        .FirstOrDefaultAsync(u => u.NameUser == username && u.PassWordUser == password);
+        .FirstOrDefaultAsync(u => u.UserName == username );
 
     if (user == null)
     return Results.Unauthorized();
 
     return Results.Ok(new
     {
-        UserId = user.IdUser,
-        Username = user.NameUser
+        UserId = user.UserId,
+        Username = user.UserName
     });
 });
 // POST: Voeg een nieuw bucket list item toe aan de databank
