@@ -129,22 +129,19 @@ app.MapGet("/users/login", async (string username, BucketListDbContext db) =>
         Username = user.UserName
     });
 });
-// POST: Voeg een nieuw bucket list item toe aan de databank
-// POST: Voeg een item toe aan de bucket listitems
-app.MapPost("/bucketlistitem", async (string itemName, string itemDescription, BucketListDbContext db) =>
+
+
+app.MapPost("/users/register", async (string NameRegister, string passwordRegister, BucketListDbContext db) =>
 {
-    var exists = await db.Bucketlistitems
-    .AnyAsync(pbl => pbl.NameBucketListItem == itemName);
+    var exists = await db.Users
+    .AnyAsync(pbl => pbl.UserName == NameRegister);
     if (exists)
-        return Results.Conflict("Item already in bucket list");
-    var bucketlistitem = new Bucketlistitem
-    {
-        NameBucketListItem = itemName,
-        DescriptionBucketListItem = itemDescription,
-    };
-    db.Bucketlistitems.Add(bucketlistitem);
+        return Results.Conflict("Account already exists");
+    var Users = new User { UserName = NameRegister, passWordUser = passwordRegister };
+    
+    db.Bucketlistitems.Add(Users);
     await db.SaveChangesAsync();
 
-    return Results.Created($"bucketlistitem", bucketlistitem);
+    return Results.Created($"user", Users);
 });
 app.Run();
