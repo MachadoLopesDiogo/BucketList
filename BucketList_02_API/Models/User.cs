@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace BucketListAPI.Models;
+namespace BucketList_02_API.Models;
 
 public partial class User
 {

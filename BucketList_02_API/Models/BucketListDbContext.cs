@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
-namespace BucketListAPI.Models;
+namespace BucketList_02_API.Models;
 
 public partial class BucketListDbContext : DbContext
 {

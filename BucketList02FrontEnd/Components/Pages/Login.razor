@@ -1,0 +1,173 @@
+﻿@page "/login"
+@inject HttpClient Http
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<div style="max-width: 360px; margin: 40px auto; padding: 24px; background: white; border: 1px solid #ddd; border-radius: 6px;">
+
+    <div style="display: flex; margin-bottom: 20px; border-bottom: 1px solid #ddd;">
+        <button @onclick='() => activeTab = "login"'
+                style="flex: 1; padding: 10px; border: none; background: none; cursor: pointer; font-size: 14px;
+                       color: @(activeTab == "login" ? "#333" : "#999");
+                       border-bottom: @(activeTab == "login" ? "2px solid #333" : "none");
+                       margin-bottom: -1px;">
+            Inloggen
+        </button>
+        <button @onclick='() => activeTab = "register"'
+                style="flex: 1; padding: 10px; border: none; background: none; cursor: pointer; font-size: 14px;
+                       color: @(activeTab == "register" ? "#333" : "#999");
+                       border-bottom: @(activeTab == "register" ? "2px solid #333" : "none");
+                       margin-bottom: -1px;">
+            Registreren
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div style="padding: 10px; background: #fff3f3; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24; margin-bottom: 16px; font-size: 14px;">
+            @errorMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div style="padding: 10px; background: #f0fff4; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724; margin-bottom: 16px; font-size: 14px;">
+            @successMessage
+        </div>
+    }
+
+    <!-- Login Tab -->
+    @if (activeTab == "login")
+    {
+        <div class="mb-3">
+            <label style="font-size: 14px; margin-bottom: 4px; display: block;">Gebruikersnaam</label>
+            <input type="text" class="form-control" placeholder="Gebruikersnaam" @bind="userName" />
+        </div>
+        <div class="mb-3">
+            <label style="font-size: 14px; margin-bottom: 4px; display: block;">Wachtwoord</label>
+            <input type="password" class="form-control" placeholder="Wachtwoord" @bind="pass" />
+        </div>
+        <button @onclick="LoginUser" disabled="@isLoading" class="btn btn-primary w-100">
+            @(isLoading?"Bezig"  : "Login")
+        </button>
+    }
+
+    <!-- Register Tab -->
+    @if (activeTab == "register")
+    {
+        <div class="mb-3">
+            <label style="font-size: 14px; margin-bottom: 4px; display: block;">Gebruikersnaam</label>
+            <input type="text" class="form-control" placeholder="Gebruikersnaam" @bind="regUserName" />
+        </div>
+        <div class="mb-3">
+            <label style="font-size: 14px; margin-bottom: 4px; display: block;">Wachtwoord</label>
+            <input type="password" class="form-control" placeholder="Wachtwoord" @bind="regPass" />
+        </div>
+        <button @onclick="RegisterUser" disabled="@isLoading" class="btn btn-primary w-100">
+            @(isLoading ? "Bezig..." : "Registreren")
+        </button>
+    }
+</div>
+
+@code {
+    private string activeTab = "login";
+
+    // Login fields
+    private string userName = "";
+    private string pass = "";
+
+    // Register fields
+    private string regUserName = "";
+    private string regPass = "";
+
+    private string errorMessage = "";
+    private string successMessage = "";
+    private bool isLoading = false;
+
+    private async Task LoginUser()
+    {
+        errorMessage = "";
+        isLoading = true;
+
+        try
+        {
+            var url = $"/login?username={Uri.EscapeDataString(userName)}&password={Uri.EscapeDataString(pass)}";
+            var response = await Http.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var user = await response.Content.ReadFromJsonAsync<UserDto>();
+                await JS.InvokeVoidAsync("sessionStorage.setItem", "userId", user!.IdUser.ToString());
+                await JS.InvokeVoidAsync("sessionStorage.setItem", "userName", user.NameUser);
+                Navigation.NavigateTo("/bucketlistitem");
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                errorMessage = "Foute gebruikersnaam of wachtwoord.";
+            }
+            else
+            {
+                errorMessage = "Onbekende fout bij het inloggen.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Kan geen verbinding maken met de server.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RegisterUser()
+    {
+        errorMessage = "";
+        successMessage = "";
+
+        if (string.IsNullOrWhiteSpace(regUserName) || string.IsNullOrWhiteSpace(regPass))
+        {
+            errorMessage = "Vul alle velden in.";
+            return;
+        }
+
+        isLoading = true;
+
+        try
+        {
+            var url = $"/AddUser?userName={Uri.EscapeDataString(regUserName)}&password={Uri.EscapeDataString(regPass)}";
+            var response = await Http.PostAsync(url, null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Account aangemaakt!";
+                regUserName = "";
+                regPass = "";
+                activeTab = "login";
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                errorMessage = "Gebruikernaam bestaat al ";
+            }
+            else
+            {
+                errorMessage = "Onbekende fout bij het registreren.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Kan geen verbinding maken met de server.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class UserDto
+    {
+        public int IdUser { get; set; }
+        public string NameUser { get; set; } = "";
+    }
+}
