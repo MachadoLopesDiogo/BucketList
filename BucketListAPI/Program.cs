@@ -139,7 +139,7 @@ app.MapPost("/users/register", async (string NameRegister, string passwordRegist
         return Results.Conflict("Account already exists");
     var User = new User { NameUser = NameRegister, PassWordUser = passwordRegister };
 
-    db.Bucketlistitems.Add(Users);
+    //db.Bucketlistitems.Add(Users);
     await db.SaveChangesAsync();
 
     return Results.Created($"user", User);
