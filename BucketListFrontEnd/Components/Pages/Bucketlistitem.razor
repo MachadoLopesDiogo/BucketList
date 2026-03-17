@@ -1,5 +1,6 @@
 ﻿@page "/bucketlistitem"
 @inject HttpClient Http
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <div style="max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
@@ -10,34 +11,56 @@
 
     @if (items == null)
     {
-            <p style="text-align: center; padding: 60px 20px; color: #999;">Laden...</p>
+        <p style="text-align: center; padding: 60px 20px; color: #999;">Laden...</p>
     }
     else if (!items.Any())
     {
-            <p style="text-align: center; padding: 60px 20px; color: #999;">Geen bucket list items gevonden!</p>
+        <p style="text-align: center; padding: 60px 20px; color: #999;">Geen bucket list items gevonden!</p>
     }
     else
     {
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
             @foreach (var item in items)
             {
-                        <div style="padding: 24px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: box-shadow 0.3s;">
-                            <h4 style="font-size: 20px; font-weight: 600; color: #2c3e50; margin-bottom: 10px;">@item.name</h4>
-                            <p style="color: #666; line-height: 1.6;">@item.description</p>
-                        </div>
+                var inMyList = myItemIds.Contains(item.itemId);
+                <div style="padding: 24px; background: white; border: 1px solid @(inMyList ? "#667eea" : "#e0e0e0"); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <h4 style="font-size: 20px; font-weight: 600; color: #2c3e50; margin-bottom: 10px;">@item.name</h4>
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 16px;">@item.description</p>
+                    @if (userId > 0)
+                    {
+                        @if (inMyList)
+                        {
+                            <span style="display: inline-block; padding: 6px 14px; background: #eef0ff; color: #667eea; border-radius: 6px; font-size: 14px; font-weight: 600;">✓ In mijn lijst</span>
+                        }
+                        else
+                        {
+                            <button style="padding: 6px 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;"
+                                    @onclick="() => AddToMyList(item.itemId)">+ Voeg toe</button>
+                        }
+                    }
+                </div>
             }
-            </div>
+        </div>
     }
 </div>
 
 @code {
     private List<BucketListItem>? items;
+    private HashSet<int> myItemIds = new();
+    private int userId = 0;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            var userIdStr = await JS.InvokeAsync<string?>("localStorage.getItem", "userId");
+            if (int.TryParse(userIdStr, out var id))
+                userId = id;
+
             await LoadItems();
+            if (userId > 0)
+                await LoadMyItems();
+
             StateHasChanged();
         }
     }
@@ -47,10 +70,36 @@
         items = await Http.GetFromJsonAsync<List<BucketListItem>>("bucketlistitems");
     }
 
+    private async Task LoadMyItems()
+    {
+        var myItems = await Http.GetFromJsonAsync<List<PersonalItem>>($"users/{userId}/bucketlist");
+        if (myItems != null)
+            myItemIds = myItems.Select(i => i.itemId).ToHashSet();
+    }
+
+    private async Task AddToMyList(int itemId)
+    {
+        var response = await Http.PostAsync($"users/{userId}/bucketlist/{itemId}", null);
+        if (response.IsSuccessStatusCode)
+        {
+            myItemIds.Add(itemId);
+            StateHasChanged();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Kon item niet toevoegen.");
+        }
+    }
+
     public class BucketListItem
     {
         public int itemId { get; set; }
         public string name { get; set; } = string.Empty;
         public string description { get; set; } = string.Empty;
+    }
+
+    public class PersonalItem
+    {
+        public int itemId { get; set; }
     }
 }

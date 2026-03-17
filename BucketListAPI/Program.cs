@@ -131,17 +131,17 @@ app.MapGet("/users/login", async (string username, BucketListDbContext db) =>
 });
 
 
-app.MapPost("/users/register", async (string NameRegister, string passwordRegister, BucketListDbContext db) =>
+app.MapPost("/users/register", async (string username, string password, BucketListDbContext db) =>
 {
     var exists = await db.Users
-    .AnyAsync(pbl => pbl.NameUser == NameRegister);
+    .AnyAsync(u => u.NameUser == username);
     if (exists)
         return Results.Conflict("Account already exists");
-    var User = new User { NameUser = NameRegister, PassWordUser = passwordRegister };
+    var user = new User { NameUser = username, PassWordUser = password };
 
-    //db.Bucketlistitems.Add(Users);
+    db.Users.Add(user);
     await db.SaveChangesAsync();
 
-    return Results.Created($"user", User);
+    return Results.Created($"user", user);
 });
 app.Run();

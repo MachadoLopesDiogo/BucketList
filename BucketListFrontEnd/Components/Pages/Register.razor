@@ -25,6 +25,7 @@
     private async Task RegisterUser()
     {
         var url = $"/users/register?username={Uri.EscapeDataString(_username)}&password={Uri.EscapeDataString(_password)}";
+
         var response = await Http.PostAsync(url, null);
 
         if (response.IsSuccessStatusCode)

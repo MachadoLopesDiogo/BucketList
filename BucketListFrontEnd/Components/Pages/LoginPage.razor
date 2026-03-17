@@ -29,7 +29,10 @@
 
         if (response.IsSuccessStatusCode)
         {
-            Navigation.NavigateTo("/bucketlistitem"); // kies je eigen pagina
+            var user = await response.Content.ReadFromJsonAsync<UserResponse>();
+            await JS.InvokeVoidAsync("localStorage.setItem", "userId", user!.userId.ToString());
+            await JS.InvokeVoidAsync("localStorage.setItem", "username", user.username);
+            Navigation.NavigateTo("/bucketlistitem");
         }
         else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
@@ -39,5 +42,11 @@
         {
             await JS.InvokeVoidAsync("alert", "Onbekende fout bij login.");
         }
+    }
+
+    public class UserResponse
+    {
+        public int userId { get; set; }
+        public string username { get; set; } = string.Empty;
     }
 }
