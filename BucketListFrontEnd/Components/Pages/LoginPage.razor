@@ -30,9 +30,9 @@
         if (response.IsSuccessStatusCode)
         {
             var user = await response.Content.ReadFromJsonAsync<UserResponse>();
-            await JS.InvokeVoidAsync("localStorage.setItem", "userId", user!.userId.ToString());
-            await JS.InvokeVoidAsync("localStorage.setItem", "username", user.username);
-            Navigation.NavigateTo("/bucketlistitem");
+            await JS.InvokeVoidAsync("localStorage.setItem", "userId", user!.UserId.ToString());
+            await JS.InvokeVoidAsync("localStorage.setItem", "username", user.Username);
+            Navigation.NavigateTo("/bucketlistitem", forceLoad: true);
         }
         else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
@@ -46,7 +46,7 @@
 
     public class UserResponse
     {
-        public int userId { get; set; }
-        public string username { get; set; } = string.Empty;
+        public int UserId { get; set; }
+        public string Username { get; set; } = string.Empty;
     }
 }

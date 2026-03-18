@@ -1,6 +1,28 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">BucketListFrontEnd</a>
+﻿@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center;">
+        <a class="navbar-brand" href="">🪣 BucketList</a>
+        @if (!string.IsNullOrEmpty(loggedInUsername))
+        {
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+                <span style="color: #cce5ff; background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 999px;">
+                    👤 @loggedInUsername
+                </span>
+                <button @onclick="Logout"
+                        style="background: rgba(255,80,80,0.7); color: white; border: none; padding: 4px 12px; border-radius: 999px; cursor: pointer; font-size: 13px;">
+                    Uitloggen
+                </button>
+            </div>
+        }
+        else
+        {
+            <a href="/login" style="color: #cce5ff; font-size: 13px; text-decoration: none; background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 999px;">
+                Inloggen
+            </a>
+        }
     </div>
 </div>
 
@@ -15,25 +37,56 @@
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
             <NavLink class="nav-link" href="login">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> LoginPage
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Register">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Register
-            </NavLink>
-        </div><div class="nav-item px-3">
-            <NavLink class="nav-link" href="BucketListitem">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> BucketListitem
+                <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Inloggen
             </NavLink>
         </div>
 
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Register">
+                <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> Registreren
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="bucketlistitem">
+                <span class="bi bi-list-ul-nav-menu" aria-hidden="true"></span> Alle Items
+            </NavLink>
+        </div>
+
+        @if (!string.IsNullOrEmpty(loggedInUsername))
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="mijnlijst">
+                    <span class="bi bi-star-fill-nav-menu" aria-hidden="true"></span> Mijn Lijst ⭐
+                </NavLink>
+            </div>
+        }
+
+
     </nav>
 </div>
+
+@code {
+    private string loggedInUsername = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var username = await JS.InvokeAsync<string?>("localStorage.getItem", "username");
+            loggedInUsername = username ?? "";
+            StateHasChanged();
+        }
+    }
+
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userId");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "username");
+        loggedInUsername = "";
+        StateHasChanged();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}
 
