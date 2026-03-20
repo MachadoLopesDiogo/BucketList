@@ -118,15 +118,16 @@ app.MapGet("/bucketlistitems", async (BucketListDbContext db) =>
 app.MapGet("/users/login", async (string username, string password, BucketListDbContext db) =>
 {
     var user = await db.Users
-        .FirstOrDefaultAsync(u => u.NameUser == username && u.PassWordUser == password);
+        .FirstOrDefaultAsync(u => u.UserName == username && u.PassWordUser == password);
 
     if (user == null)
         return Results.Unauthorized();
 
     return Results.Ok(new
     {
-        UserId = user.IdUser,
-        Username = user.NameUser
+        UserId = user.UserId,
+        Username = user.UserName,
+        Password = password
     });
 });
 // POST: Voeg een nieuw bucket list item toe aan de databank
@@ -151,14 +152,22 @@ app.MapPost("/bucketlistitem", async (string itemName, string itemDescription, B
 //een user toevoegen 
 app.MapPost("/AddUser", async (string userName, string password, BucketListDbContext db) =>
 {
+<<<<<<< HEAD
     var exists = await db.Users.AnyAsync(pbl => pbl.NameUser == userName);
+=======
+    var exists = await db.Users.AnyAsync(pbl => pbl.UserName == userName);
+>>>>>>> register-toevoegen
 
     if (exists)
         return Results.Conflict("User already in Database");
 
     var user = new User
     {
+<<<<<<< HEAD
         NameUser = userName,
+=======
+        UserName = userName,
+>>>>>>> register-toevoegen
         PassWordUser = password
     };
 
