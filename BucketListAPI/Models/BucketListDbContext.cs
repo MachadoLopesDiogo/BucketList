@@ -78,17 +78,19 @@ public partial class BucketListDbContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PRIMARY");
+            entity.HasKey(e => e.IdUser).HasName("PRIMARY");
 
             entity.ToTable("user");
 
-            entity.HasIndex(e => e.UserName, "nameUser").IsUnique();
+            entity.HasIndex(e => e.NameUser, "nameUser").IsUnique();
 
-            entity.Property(e => e.UserId).HasColumnName("idUser");
-            entity.Property(e => e.UserName)
+            entity.Property(e => e.IdUser).HasColumnName("idUser");
+            entity.Property(e => e.NameUser)
                 .HasMaxLength(60)
                 .HasColumnName("nameUser");
-            
+            entity.Property(e => e.PassWordUser)
+                .HasMaxLength(60)
+                .HasColumnName("passWordUser");
         });
 
         OnModelCreatingPartial(modelBuilder);
