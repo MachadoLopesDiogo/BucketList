@@ -115,10 +115,10 @@ app.MapGet("/bucketlistitems", async (BucketListDbContext db) =>
 });
 
 // GET: Check username en password
-app.MapGet("/users/login", async (string username, BucketListDbContext db) =>
+app.MapGet("/users/login", async (string username, string password, BucketListDbContext db) =>
 {
     var user = await db.Users
-        .FirstOrDefaultAsync(u => u.NameUser == username);
+        .FirstOrDefaultAsync(u => u.NameUser == username && u.PassWordUser == password);
 
     if (user == null)
         return Results.Unauthorized();
@@ -129,19 +129,55 @@ app.MapGet("/users/login", async (string username, BucketListDbContext db) =>
         Username = user.NameUser
     });
 });
-
-
-app.MapPost("/users/register", async (string username, string password, BucketListDbContext db) =>
+// POST: Voeg een nieuw bucket list item toe aan de databank
+// POST: Voeg een item toe aan de bucket listitems
+app.MapPost("/bucketlistitem", async (string itemName, string itemDescription, BucketListDbContext db) =>
 {
-    var exists = await db.Users
-    .AnyAsync(u => u.NameUser == username);
+    var exists = await db.Bucketlistitems
+    .AnyAsync(pbl => pbl.NameBucketListItem == itemName);
     if (exists)
-        return Results.Conflict("Account already exists");
-    var user = new User { NameUser = username, PassWordUser = password };
+        return Results.Conflict("Item already in bucket list");
+    var bucketlistitem = new Bucketlistitem
+    {
+        NameBucketListItem = itemName,
+        DescriptionBucketListItem = itemDescription,
+    };
+    db.Bucketlistitems.Add(bucketlistitem);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"bucketlistitem", bucketlistitem);
+});
+
+//een user toevoegen 
+app.MapPost("/AddUser", async (string userName, string password, BucketListDbContext db) =>
+{
+    var exists = await db.Users.AnyAsync(pbl => pbl.NameUser == userName);
+
+    if (exists)
+        return Results.Conflict("User already in Database");
+
+    var user = new User
+    {
+        NameUser = userName,
+        PassWordUser = password
+    };
 
     db.Users.Add(user);
     await db.SaveChangesAsync();
 
     return Results.Created($"user", user);
+});
+// DELETE: Verwijder een item uit de globale bucketlistitems tabel
+app.MapDelete("/bucketlistitem/{itemId}", async (int itemId, BucketListDbContext db) =>
+{
+    var item = await db.Bucketlistitems.FindAsync(itemId);
+
+    if (item == null)
+        return Results.NotFound();
+
+    db.Bucketlistitems.Remove(item);
+    await db.SaveChangesAsync();
+
+    return Results.NoContent();
 });
 app.Run();
